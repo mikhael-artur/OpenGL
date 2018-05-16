@@ -158,14 +158,23 @@ int main()
     Shader particleShader("particle.vs", "particle.fs");
     SmokeGenerator smokeGenerator(particleShader, 500, "resources/textures/smoke.png");
     RainGenerator rainGenerator(particleShader, 10000, "resources/textures/rain.jpg");
-
+	
+	double LastTime = glfwGetTime();
+	int NbFrame = 0;
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
         // per-frame time logic
         // --------------------
-        float currentFrame = glfwGetTime();
+        double currentFrame = glfwGetTime();
+		NbFrame++;
+		if (currentFrame - LastTime >= 1.0){
+			printf("%f ms/frame\n", 1000.0/double(NbFrame));
+			printf("FPS: %d\n", NbFrame);
+			NbFrame = 0;
+			LastTime += 1.0;
+		}
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
