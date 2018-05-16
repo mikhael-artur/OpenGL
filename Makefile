@@ -1,2 +1,2 @@
-all : car_with_lighting.cpp glad.c stb_image.cpp
-	g++ car_with_lighting.cpp glad.c stb_image.cpp -lassimp -lopengl32 -lglfw3 -std=c++11
+all : car_with_lighting.cpp glad.c stb_image.cpp particle_generator.cpp smoke_generator.cpp mesh.cpp
+	g++ car_with_lighting.cpp glad.c stb_image.cpp mesh.cpp particle_generator.cpp smoke_generator.cpp -lassimp -lopengl32 -lglfw3 -std=c++11

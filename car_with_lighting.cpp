@@ -1,14 +1,20 @@
-#include <glad/glad.h>
+
+#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <learnopengl/filesystem.h>
 #include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
+#include <learnopengl/filesystem.h>
+#include "try/smoke_generator.h"
+#include "try/rain_generator.h"
+#include "stb_image.h"
+
+#include <vector>
 
 #include <iostream>
 
@@ -157,7 +163,11 @@ int main()
     // note that we update the lamp's position attribute's stride to reflect the updated buffer data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
-
+	
+	//////////////////////////////////////////
+    Shader particleShader("assets/shaders/particle.vs", "assets/shaders/particle.fs");
+    SmokeGenerator smokeGenerator(particleShader, "smokeparticle.png", "assets", 500);
+    RainGenerator rainGenerator(particleShader, "rainparticle.png", "assets", 30000);
 
     // render loop
     // -----------
@@ -209,7 +219,24 @@ int main()
 
         // glBindVertexArray(lightVAO);
         // glDrawArrays(GL_TRIANGLES, 0, 36);
+		
+		
+// Generate 10 new particule each millisecond,
+    		// but limit this to 16 ms (60 fps), or if you have 1 long frame (1sec),
+    		// newparticles will be huge and the next frame even longer.
+    		int newparticles = (int)(deltaTime*10000.0);
+    		if (newparticles > (int)(0.016f*10000.0))
+    			newparticles = (int)(0.016f*10000.0);
 
+        smokeGenerator.update(deltaTime, newparticles, camera.Position);
+        rainGenerator.update(deltaTime, newparticles, camera.Position);
+        particleShader.use();
+        particleShader.setMat4("projection", projection);
+        particleShader.setMat4("view", view);
+
+        smokeGenerator.render();
+        rainGenerator.render();
+       
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
