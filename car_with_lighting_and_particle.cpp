@@ -1,17 +1,12 @@
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <GL/glu.h>
 
 #include <learnopengl/filesystem.h>
-#include <learnopengl/shader_m.h>
 #include <learnopengl/camera.h>
 #include <learnopengl/model.h>
+#include <GLFW/glfw3.h>
 
-#include <iostream>
+#include "smoke_generator.h"
+#include "rain_generator.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -33,7 +28,7 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 // lighting
-glm::vec3 lightPos(2.0f, 2.0f, 2.0f);
+glm::vec3 lightPos(8.0f, 10.0f, 4.0f);
 
 int main()
 {
@@ -159,14 +154,15 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-	// GLUquadricObj *quadric;
-	// quadric = gluNewQuadric();
+	//Particles
+    Shader particleShader("particle.vs", "particle.fs");
+    SmokeGenerator smokeGenerator(particleShader, 500, "resources/textures/smoke.png");
+    RainGenerator rainGenerator(particleShader, 10000, "resources/textures/rain.jpg");
 
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
-		// gluSphere(quadric, 0.5,20,20);
         // per-frame time logic
         // --------------------
         float currentFrame = glfwGetTime();
@@ -179,7 +175,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // be sure to activate shader when setting uniforms/drawing objects
@@ -195,7 +191,7 @@ int main()
 
         // world transformation
         glm::mat4 model;
-        model = glm::translate(model, glm::vec3(0.0f, -4.0f, -4.0f)); // translate it down so it's at the center of the scene
+        model = glm::translate(model, glm::vec3(4.0f, 2.8f, 8.8f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(0.02f, 0.02f, 0.02f));	// it's a bit too big for our scene, so scale it down
         lightingShader.setMat4("model", model);
 
@@ -203,17 +199,35 @@ int main()
         ourModel.Draw(lightingShader);
 
         // also draw the lamp object
-        // lampShader.use();
-        // lampShader.setMat4("projection", projection);
-        // lampShader.setMat4("view", view);
-        // model = glm::mat4();
-        // model = glm::translate(model, lightPos);
-        // model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-        // lampShader.setMat4("model", model);
+        lampShader.use();
+        lampShader.setMat4("projection", projection);
+        lampShader.setMat4("view", view);
+        model = glm::mat4();
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+        lampShader.setMat4("model", model);
 
-        // glBindVertexArray(lightVAO);
-        // glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+		
+        // Generate 10 new particule each millisecond,
+    		// but limit this to 16 ms (60 fps), or if you have 1 long frame (1sec),
+    		// newparticles will be huge and the next frame even longer.
+    		int newparticles = (int)(deltaTime*10000.0);
+    		if (newparticles > (int)(0.016f*10000.0))
+    			newparticles = (int)(0.016f*10000.0);
 
+        smokeGenerator.Update(deltaTime, newparticles, camera.Position);
+        rainGenerator.Update(deltaTime, newparticles, camera.Position);
+        particleShader.use();
+        particleShader.setMat4("projection", projection);
+        particleShader.setMat4("view", view);
+		particleShader.setVec3("CameraRight_worldspace", view[0][0], view[1][0], view[2][0]);
+        particleShader.setVec3("CameraUp_worldspace", view[0][1], view[1][1], view[2][1]);
+        smokeGenerator.Draw();
+        rainGenerator.Draw();
+		
+		
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

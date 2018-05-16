@@ -1,9 +1,40 @@
 #include "particle_generator.h"
-#include <GL/glew.h>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/norm.hpp>
-#include <iostream>
-#include <algorithm>
+
+unsigned int loadTexture(char const * path) {
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum format;
+        if (nrComponents == 1)
+            format = GL_RED;
+        else if (nrComponents == 3)
+            format = GL_RGB;
+        else if (nrComponents == 4)
+            format = GL_RGBA;
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
+}
 
 // Constructor
 ParticleGenerator::ParticleGenerator(Shader shader, GLuint amount, const char texture_path[]) : shader(shader), amount(amount) {
@@ -14,7 +45,7 @@ ParticleGenerator::ParticleGenerator(Shader shader, GLuint amount, const char te
 
 // Render all particles
 void ParticleGenerator::Draw() {
-	glBindVertexArray(VAO);
+	glBindVertexArray(VAO1);
 	glBindBuffer(GL_ARRAY_BUFFER, particles_position_buffer);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, particles_count * sizeof(GLfloat) * 4, &particles_position[0]);
 
@@ -43,8 +74,8 @@ void ParticleGenerator::init() {
 		 -0.5f,  0.5f, 0.0f,
 		  0.5f,  0.5f, 0.0f,
 	};
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
+	glGenVertexArrays(1, &VAO1);
+	glBindVertexArray(VAO1);
 
 	GLuint billboard_vertex_buffer;
 	glGenBuffers(1, &billboard_vertex_buffer);

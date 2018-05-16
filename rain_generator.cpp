@@ -1,9 +1,9 @@
 #include "particle_generator.h"
-#include "smoke_generator.h"
+#include "rain_generator.h"
 
-SmokeGenerator::SmokeGenerator(Shader shader, GLuint amount, const char texture_path[]):ParticleGenerator(shader, amount, texture_path){}
+RainGenerator::RainGenerator(Shader shader, GLuint amount, const char texture_path[]):ParticleGenerator(shader, amount, texture_path){}
 
-void SmokeGenerator::Update(GLfloat dt, GLuint newParticles, glm::vec3 camera_position, glm::vec3 offset){
+void RainGenerator::Update(GLfloat dt, GLuint newParticles, glm::vec3 camera_position, glm::vec3 offset){
 	// Add new particles
 	for (unsigned int i = 0; i < newParticles; i++) {
 		int unused_particle = firstUnusedParticle();
@@ -26,8 +26,6 @@ void SmokeGenerator::Update(GLfloat dt, GLuint newParticles, glm::vec3 camera_po
 				p.Position.x += -(rand() % 3)/8.0f * dt;
 				p.Position.y += -(rand() % 5 - 2)/16.0f * dt;
 				p.Position.z += -(rand() % 7 - 2)/8.0f * dt;
-				
-				p.Size +=  0.005f;
 
 				p.CameraDistance = glm::length2(p.Position - camera_position);
 
@@ -52,15 +50,15 @@ void SmokeGenerator::Update(GLfloat dt, GLuint newParticles, glm::vec3 camera_po
 	sortParticles();
 }
 
-void SmokeGenerator::respawnParticle(Particle &particle, glm::vec3 offset){
+void RainGenerator::respawnParticle(Particle &particle, glm::vec3 offset){
 	particle.Life = 1.0f; // This particle will live 1 second.
-	particle.Position = glm::vec3(4.0f, 4.0f, 4.0f);
-	particle.Velocity = glm::vec3(0.0f, 0.0f, -2.0f);
+	particle.Position = glm::vec3(-(rand() % 30) + 15, 10.0f, -(rand() % 30) + 15);
+	particle.Velocity = glm::vec3(0.0f, -5.0f, 0.0f);
 
 	int color = 200 + rand() % 56;
 	particle.Color.r = color;
 	particle.Color.g = color;
 	particle.Color.b = color;
 	particle.Color.a = 255;
-	particle.Size =  0.25f;
+	particle.Size =  0.025f;
 }
